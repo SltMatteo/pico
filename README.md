@@ -14,8 +14,7 @@ APIs.
 
 > **Why "Pico"?** I called it Pico because of
 > [Nano](https://www.nano-editor.org/), before realizing Nano was inspired
-> by... Pico. Funny how things
-> [come full circle](https://dictionary.cambridge.org/dictionary/english/come-go-turn-full-circle).
+> by... [Pico](https://dictionary.cambridge.org/dictionary/english/come-go-turn-full-circle).
 
 ## Features
 
