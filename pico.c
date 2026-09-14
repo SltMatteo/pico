@@ -1,3 +1,13 @@
+/*
+ * Pico - a small terminal text editor.
+ *
+ * This is a guided implementation of Kilo, originally written by
+ * Salvatore Sanfilippo, built by following the tutorial by Paige Ruten.
+ * Kilo is distributed under the BSD 2-Clause License; see LICENSE.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 /*** includes ***/ 
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
@@ -22,7 +32,7 @@
 #define PICO_TAB_STOP 8
 #define PICO_QUIT_TIMES 3
 #define HL_HIGHLIGHT_NUMBERS (1<<0)
-#define HL_HIGHLIGH_STRINGS (1<<1) 
+#define HL_HIGHLIGHT_STRINGS (1<<1)
 
 enum editorKey {
 	BACKSPACE = 127, 
@@ -104,7 +114,7 @@ struct editorSyntax HLDB[] = {
 		C_HL_extensions, 
 		C_HL_keywords, 
 		"//", "/*", "*/", 
-		HL_HIGHLIGHT_NUMBERS | HL_HIGHLIGH_STRINGS
+		HL_HIGHLIGHT_NUMBERS | HL_HIGHLIGHT_STRINGS
 	}, 
 }; 
 
@@ -243,8 +253,8 @@ void editorUpdateSyntax(erow* row) {
 	char* mce = E.syntax->multiline_comment_end; 
 
 	int scs_len = scs ? strlen(scs) : 0; 
-	int mcs_len = mcs ? strlen(scs) : 0; 
-	int mce_len = mce ? strlen(scs) : 0; 
+	int mcs_len = mcs ? strlen(mcs) : 0;
+	int mce_len = mce ? strlen(mce) : 0;
 
 	int prev_sep = 1; 
 	int in_string = 0; 
@@ -283,7 +293,7 @@ void editorUpdateSyntax(erow* row) {
 			}
 		}
 
-		if (E.syntax->flags & HL_HIGHLIGH_STRINGS) {
+		if (E.syntax->flags & HL_HIGHLIGHT_STRINGS) {
 			if (in_string) {
 				row->hl[i] = HL_STRING; 
 				if (c == '\\' && i + 1 < row->rsize) {
@@ -566,7 +576,10 @@ void editorOpen(char* filename) {
 	editorSelectSyntaxHighlight(); 
 
 	FILE* fp = fopen(filename, "r"); 
-	if (!fp) die("fopen");
+	if (!fp) {
+		if (errno == ENOENT) return;
+		die("fopen");
+	}
 	
 	char* line = NULL; 
 	size_t linecap = 0; 
@@ -813,7 +826,7 @@ void editorProcessKeypress(void) {
 					E.cy = E.rowoff; 
 				} else if (c == PAGE_DOWN) {
 					E.cy = E.rowoff + E.screenrows - 1; 
-					if (E.cy < E.numrows) E.cy = E.numrows; 
+					if (E.cy > E.numrows) E.cy = E.numrows;
 				}
 				int times = E.screenrows; 
 				while (times--) 
@@ -940,7 +953,8 @@ void editorDrawStatusBar(struct abuf *ab) {
 	int len = snprintf(status, sizeof(status), "%.20s - %d lines %s", 
 		E.filename ? E.filename : "[No Name]", E.numrows, 
 		E.dirty ? "(modified)" : ""); 
-	int rlen = snprintf(rstatus, sizeof(rstatus), "%s | %d%d", E.syntax ? E.syntax->filetype : "no ft", E.cy + 1, E.numrows); 
+	int current_line = E.numrows == 0 ? 0 : E.cy + 1;
+	int rlen = snprintf(rstatus, sizeof(rstatus), "%s | %d/%d", E.syntax ? E.syntax->filetype : "no ft", current_line, E.numrows);
 	if (len > E.screencols) len = E.screencols; 
 	abAppend(ab, status, len); 
 	while (len < E.screencols) {
